@@ -1,0 +1,98 @@
+---
+title: "Comparison of Differnetial Expression Analysis on Simulated Data with DESeq2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette_1123}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Here, we compare our simpleDE method with DESeq2, one of the most popular R packges for diffrential expression analyis. Both methods will be performed on the same simulated dataset, and compared in terms of correctness and effciency.
+
+```{r setup}
+options(warnings=-1)
+library(simpleDE)
+suppressPackageStartupMessages(library(DESeq2))
+
+```
+
+Here we simulate a dataset containing 10000 genes expression data in 10 samples from two condition (5 treatment vs 5 control). Among those 10000 genes, 100 genes are differentially expressed genes, simulated from two negative binomial distribution with distinct means. 
+
+```{r}
+set.seed(20191124)
+mu = rpois(10000, 20)
+size = 20
+ctr_dt = matrix(NA, 10000, 5)
+trt_dt = matrix(NA, 10000, 5)
+for (i in 1:100){
+  ctr_dt[i, ] = rnbinom(n = 5, size =  size, mu = mu[i])
+  trt_dt[i, ] = rnbinom(n = 5, size =  size, mu = mu[i] + 40)
+}
+for (i in 101:10000){
+  ctr_dt[i, ] = rnbinom(n = 5, size = size, mu = mu[i])
+  trt_dt[i, ] = rnbinom(n = 5, size = size, mu = mu[i])
+}
+
+dt = cbind(ctr_dt, trt_dt)
+colnames(dt) = c(sapply(1:5, function(x) paste0("ctr",x)), sapply(1:5, function(x) paste0("trt",x)))
+rownames(dt) = c(sapply(1:100, function(x) paste0("DEG",x)), sapply(1:9900, function(x) paste0("non_DEG",x)))
+
+dt[1:10,]
+dt[101:110,]
+
+```
+
+Here we also set up the sample information and gene information.
+
+```{r}
+# Create simpleDE
+mtx = dt
+s_data = data.frame(treatment = rep(c(0,1), each = 5))
+g_data = data.frame(is_DEG = c(rep(1, 100), rep(0, 9900)))
+```
+
+Now we perform simpleDE and get the final differnetially expressed genes by threhold of 0.5 for log fold-change and 0.01 for p value.
+```{r}
+simpleDE.test = function(){
+  simple.dt = Create_simpleDE(mtx, s_data, g_data)
+  simple.dt = Filter_Data(simple.dt, verbose = F)
+  simple.dt = Normalize_Data(simple.dt, option = "size_factor")
+  de.geno = DEA_test(simple.dt, group = "treatment", verbose = F)
+  de.res = Get_DEG(de.geno, "log_FC", 0.5, is.sort = F)
+  de.res = Get_DEG(de.res, "p_value", 0.01, is.sort = F)
+  print(head(de.res))
+  print(table(substr(rownames(de.res), 1, 3)))
+}
+# simpleDE.test()
+system.time(simpleDE.test())
+
+```
+Now we also perform DESeq2 on the same data.
+```{r}
+DESeq2.test = function(){
+  dds = DESeqDataSetFromMatrix(countData = dt, colData = s_data, design = ~ treatment)
+  dds = DESeq(dds)
+  res = results(dds)
+  res = res[ res$log2FoldChange > log(exp(0.5)) | res$log2FoldChange < -log(exp(0.5)), ]
+  res = res[res$pvalue < 0.01, ]
+  print(head(res))
+  print(table(substr(rownames(res), 1, 3)))
+}
+# DESeq2.test()
+system.time(DESeq2.test())
+```
+
+# Conclusion
+
+In terms of sensitivity, while DESeq2 has a full score, simpleDE has a decent 87% true positive rate.
+In terms of specificity, DESeq2 contains a level of (9900-54) / 9900 = 99.45% and simpleDE has a level of (9900 - 33) / 9900 = 99.67%.
+Overall, simpleDE is a less conservative method comparing with DESeq2.
+
+In terms of time effiency, simpleDE is much faster than DESeq2 due to simplicity of algorithm and less handling of data structure.

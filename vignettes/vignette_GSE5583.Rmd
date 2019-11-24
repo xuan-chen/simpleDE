@@ -1,0 +1,67 @@
+---
+title: "Differnetial Expression Analysis on Expression Data of Mouse Embryonic Stem Cells"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette_GSE5583}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This tutorial will be analyzing a expression dataset (GSE5583). It contains an expression matrix of embryonic stem cells from 3 wild types and 3 HDAC knock out mice. Histone deacetylase 1 (HDAC1) is an enzyme asssocatied with gene activation and expression and it plays an important role at development and proliferation. Differential expression analysis will be performed here to seek for significant genes associated with HDAC knock out and hope to build up the underlying biological mechanism.
+
+```{r setup}
+library(simpleDE)
+library(data.table)
+
+# load the dataset
+dt = fread("../data/GSE5583.txt")
+head(dt)
+```
+
+Here we only have the expression data matrix. But we can still create a simpleDE list for further analysis. However, we can be add some sample information in sample_info as index for differential expression analysis.
+
+```{r}
+# Create simpleDE
+mtx = as.matrix(dt[,-1])
+rownames(mtx) = dt$ID
+colnames(mtx) = colnames(dt)[-1]
+
+simple.mouse = Create_simpleDE(mtx)
+str(simple.mouse)
+```
+
+Now we add genotype information into sample_info.
+
+```{r}
+simple.mouse$sample_info["genotype"] = rep(c("WT", "KO"), each = 3)
+str(simple.mouse)
+```
+
+Then we perform filtering and normalization.
+
+```{r}
+simple.mouse = Filter_Data(simple.mouse, verbose = F)
+simple.mouse = Normalize_Data(simple.mouse, option = "size_factor")
+```
+
+Now we can perform differential expression test on two genotypes.
+
+```{r}
+de.geno = DEA_test(simple.mouse, group = "genotype", verbose = F)
+head(de.geno)
+```
+
+Now we are only interesting in genes with absolute log_FC larger than 0.5 and p_value smaller than 0.5.
+```{r}
+de.res = Get_DEG(de.geno, "log_FC", 0.5)
+de.res = Get_DEG(de.res, "p_value", 0.05)
+str(de.res)
+head(de.res)
+```
