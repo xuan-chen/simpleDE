@@ -33,6 +33,7 @@ Filter_Data = function(x, min_gene = 5, min_read = 5, verbose = T){
   x$gene_info = x$gene_info[g_index, , drop = F]
 
   if (verbose){
+    print("\n")
     print(paste0(s_filter, " samples are filtered."))
     print(paste0(g_filter, " genes are filtered."))
   }
