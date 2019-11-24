@@ -1,5 +1,13 @@
 # simpleDE
 
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.org/xuan-chen/simpleDE.svg?branch=master)](https://travis-ci.org/xuan-chen/simpleDE)
+<!-- badges: end -->
+
+<!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/xuan-chen/simpleDE/branch/master/graph/badge.svg)](https://codecov.io/gh/xuan-chen/simpleDE?branch=master)
+<!-- badges: end -->
+
 ## Introduction
 This is an R package for carrying out simple differential expression analysis on gene expression data using t-test.
 It requires easy format of input data and is able to choose interesting genes conveniently from the results based on specified criteria.
