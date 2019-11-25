@@ -14,7 +14,16 @@
 #' @return a list adding with a new element containing normalized data
 #'
 #' @examples
-#' simple.a = Normalize_Data(simple.a, option = "simplest")
+#' a = matrix(c(1:8,1:8), 4, 4)
+#' rownames(a) = sapply(1:4, function(x) paste0("gene", x))
+#' colnames(a) = sapply(1:4, function(x) paste0("sample",x))
+#' g = data.frame(ENTREZ_ID = c(123,124,125,126))
+#' rownames(g) = sapply(1:4, function(x) paste0("gene", x))
+#' s = data.frame(batch = c(1,2,2,1))
+#' rownames(s) = sapply(1:4, function(x) paste0("sample",x))
+#' simple.a = Create_simpleDE(a, s, g)
+#' simple.a = Filter_Data(simple.a, 0, 0)
+#' simple.a = Normalize_Data(simple.a, "size_factor")
 #'
 #' @export
 #'

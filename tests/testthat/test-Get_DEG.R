@@ -1,3 +1,6 @@
+g = data.frame(ENTREZ_ID = c(123,124,125,126))
+rownames(g) = sapply(1:4, function(x) paste0("gene", x))
+
 de.a = data.frame(gene = rownames(g),
                        t = rep(0,4),
                        FC = rep(1,4),
